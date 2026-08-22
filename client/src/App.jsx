@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { Authenticator } from "@aws-amplify/ui-react";
+import { fetchAuthSession } from "aws-amplify/auth";
 import "./App.css";
 
-function App() {
+function TicketApp({ signOut, user }) {
   const [tickets, setTickets] = useState([]);
   const [view, setView] = useState("dashboard");
   const [loading, setLoading] = useState(true);
@@ -49,16 +51,32 @@ function App() {
   const [readinessHistory, setReadinessHistory] = useState([]);
   const [impactHistory, setImpactHistory] = useState([]);
 
-  useEffect(() => {
-    fetchTickets();
-  }, []);
+  const authenticatedFetch = async (url, options = {}) => {
+    const session = await fetchAuthSession();
+
+    const accessToken = session.tokens?.accessToken?.toString();
+
+    if (!accessToken) {
+      throw new Error("No authentication token available");
+    }
+
+    return fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
+  };
 
   const fetchTickets = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await fetch("http://localhost:5000/api/tickets");
+      const response = await authenticatedFetch(
+        "http://localhost:5000/api/tickets"
+      );
 
       if (!response.ok) {
         throw new Error("Failed to retrieve tickets");
@@ -73,6 +91,10 @@ function App() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchTickets();
+  }, []);
 
   const handleFormChange = (event) => {
     const { name, value } = event.target;
@@ -89,13 +111,16 @@ function App() {
     try {
       setError("");
 
-      const response = await fetch("http://localhost:5000/api/tickets", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(form)
-      });
+      const response = await authenticatedFetch(
+        "http://localhost:5000/api/tickets",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(form)
+        }
+      );
 
       const data = await response.json();
 
@@ -132,14 +157,12 @@ function App() {
   };
 
   const runReadinessAssessment = async () => {
-    if (!createdTicket) {
-      return;
-    }
+    if (!createdTicket) return;
 
     try {
       setError("");
 
-      const response = await fetch(
+      const response = await authenticatedFetch(
         `http://localhost:5000/api/readiness/${createdTicket.id}`,
         {
           method: "POST",
@@ -157,7 +180,6 @@ function App() {
       }
 
       setReadinessResult(data.result);
-
       await fetchTickets();
     } catch (err) {
       console.error(err);
@@ -175,14 +197,12 @@ function App() {
   };
 
   const runImpactAssessment = async () => {
-    if (!selectedTicket) {
-      return;
-    }
+    if (!selectedTicket) return;
 
     try {
       setError("");
 
-      const response = await fetch(
+      const response = await authenticatedFetch(
         `http://localhost:5000/api/impact/${selectedTicket.id}`,
         {
           method: "POST",
@@ -258,8 +278,12 @@ function App() {
       setHistoryTicket(ticket);
 
       const [readinessResponse, impactResponse] = await Promise.all([
-        fetch(`http://localhost:5000/api/readiness/${ticket.id}`),
-        fetch(`http://localhost:5000/api/impact/${ticket.id}`)
+        authenticatedFetch(
+          `http://localhost:5000/api/readiness/${ticket.id}`
+        ),
+        authenticatedFetch(
+          `http://localhost:5000/api/impact/${ticket.id}`
+        )
       ]);
 
       if (!readinessResponse.ok || !impactResponse.ok) {
@@ -300,12 +324,24 @@ function App() {
           <p>Engineering Tool</p>
         </div>
 
+        <div className="user-panel">
+          <span>Signed in as</span>
+          <strong>
+            {user?.signInDetails?.loginId ||
+              user?.username ||
+              "Authenticated user"}
+          </strong>
+
+          <button className="logout-button" onClick={signOut}>
+            Sign out
+          </button>
+        </div>
+
         <nav>
           <button
             className={`nav-item ${view === "dashboard" ? "active" : ""}`}
             onClick={() => {
               setView("dashboard");
-              setError("");
               fetchTickets();
             }}
           >
@@ -463,7 +499,6 @@ function App() {
                         name="jira_reference"
                         value={form.jira_reference}
                         onChange={handleFormChange}
-                        placeholder="e.g. DEV-1002"
                         required
                       />
                     </div>
@@ -475,12 +510,10 @@ function App() {
                         value={form.ticket_type}
                         onChange={handleFormChange}
                       >
-                        <option value="Bug">Bug</option>
-                        <option value="Feature">Feature</option>
-                        <option value="Change">Change</option>
-                        <option value="Investigation">
-                          Investigation
-                        </option>
+                        <option>Bug</option>
+                        <option>Feature</option>
+                        <option>Change</option>
+                        <option>Investigation</option>
                       </select>
                     </div>
 
@@ -490,7 +523,6 @@ function App() {
                         name="title"
                         value={form.title}
                         onChange={handleFormChange}
-                        placeholder="Enter ticket title"
                         required
                       />
                     </div>
@@ -502,10 +534,10 @@ function App() {
                         value={form.priority}
                         onChange={handleFormChange}
                       >
-                        <option value="Low">Low</option>
-                        <option value="Medium">Medium</option>
-                        <option value="High">High</option>
-                        <option value="Critical">Critical</option>
+                        <option>Low</option>
+                        <option>Medium</option>
+                        <option>High</option>
+                        <option>Critical</option>
                       </select>
                     </div>
                   </div>
@@ -517,7 +549,6 @@ function App() {
                       value={form.description}
                       onChange={handleFormChange}
                       rows="5"
-                      placeholder="Describe the requested software change..."
                     />
                   </div>
 
@@ -537,81 +568,26 @@ function App() {
 
                 <h2>Ticket Readiness Checklist</h2>
 
-                <p className="help-text">
-                  Confirm whether each mandatory item is present in the
-                  development ticket.
-                </p>
-
                 <div className="checklist">
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="has_description"
-                      checked={readiness.has_description}
-                      onChange={handleReadinessChange}
-                    />
-                    Description provided
-                  </label>
-
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="has_steps_to_reproduce"
-                      checked={readiness.has_steps_to_reproduce}
-                      onChange={handleReadinessChange}
-                    />
-                    Steps to reproduce provided
-                  </label>
-
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="has_expected_behaviour"
-                      checked={readiness.has_expected_behaviour}
-                      onChange={handleReadinessChange}
-                    />
-                    Expected behaviour provided
-                  </label>
-
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="has_actual_behaviour"
-                      checked={readiness.has_actual_behaviour}
-                      onChange={handleReadinessChange}
-                    />
-                    Actual behaviour provided
-                  </label>
-
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="has_environment"
-                      checked={readiness.has_environment}
-                      onChange={handleReadinessChange}
-                    />
-                    Environment identified
-                  </label>
-
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="has_acceptance_criteria"
-                      checked={readiness.has_acceptance_criteria}
-                      onChange={handleReadinessChange}
-                    />
-                    Acceptance criteria provided
-                  </label>
-
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="has_priority"
-                      checked={readiness.has_priority}
-                      onChange={handleReadinessChange}
-                    />
-                    Priority defined
-                  </label>
+                  {[
+                    ["has_description", "Description provided"],
+                    ["has_steps_to_reproduce", "Steps to reproduce provided"],
+                    ["has_expected_behaviour", "Expected behaviour provided"],
+                    ["has_actual_behaviour", "Actual behaviour provided"],
+                    ["has_environment", "Environment identified"],
+                    ["has_acceptance_criteria", "Acceptance criteria provided"],
+                    ["has_priority", "Priority defined"]
+                  ].map(([name, label]) => (
+                    <label key={name}>
+                      <input
+                        type="checkbox"
+                        name={name}
+                        checked={readiness[name]}
+                        onChange={handleReadinessChange}
+                      />
+                      {label}
+                    </label>
+                  ))}
                 </div>
 
                 <button
@@ -664,6 +640,7 @@ function App() {
                       });
 
                       setImpactResult(null);
+
                       setImpact({
                         ui_impact: false,
                         api_impact: false,
@@ -704,8 +681,8 @@ function App() {
             <header className="page-header">
               <h1>Software Change Impact Assessment</h1>
               <p>
-                Evaluate the areas of the software potentially affected by this
-                change.
+                Evaluate the areas of the software potentially affected by the
+                proposed change.
               </p>
             </header>
 
@@ -714,99 +691,29 @@ function App() {
                 <div className="assessment-ticket">
                   <span>{selectedTicket.jira_reference}</span>
                   <strong>{selectedTicket.title}</strong>
-                  <small>
-                    Readiness: {selectedTicket.readiness_score}% -{" "}
-                    {selectedTicket.readiness_status}
-                  </small>
                 </div>
 
-                <h2>Affected Areas</h2>
-
-                <p className="help-text">
-                  Select each area that may be affected by the proposed software
-                  change.
-                </p>
-
                 <div className="checklist">
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="ui_impact"
-                      checked={impact.ui_impact}
-                      onChange={handleImpactChange}
-                    />
-                    User Interface
-                  </label>
-
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="api_impact"
-                      checked={impact.api_impact}
-                      onChange={handleImpactChange}
-                    />
-                    Backend / API
-                  </label>
-
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="database_impact"
-                      checked={impact.database_impact}
-                      onChange={handleImpactChange}
-                    />
-                    Database
-                  </label>
-
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="authentication_impact"
-                      checked={impact.authentication_impact}
-                      onChange={handleImpactChange}
-                    />
-                    Authentication
-                  </label>
-
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="security_impact"
-                      checked={impact.security_impact}
-                      onChange={handleImpactChange}
-                    />
-                    Security
-                  </label>
-
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="integration_impact"
-                      checked={impact.integration_impact}
-                      onChange={handleImpactChange}
-                    />
-                    External Integration
-                  </label>
-
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="infrastructure_impact"
-                      checked={impact.infrastructure_impact}
-                      onChange={handleImpactChange}
-                    />
-                    Infrastructure
-                  </label>
-
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="deployment_impact"
-                      checked={impact.deployment_impact}
-                      onChange={handleImpactChange}
-                    />
-                    Deployment
-                  </label>
+                  {[
+                    ["ui_impact", "User Interface"],
+                    ["api_impact", "Backend / API"],
+                    ["database_impact", "Database"],
+                    ["authentication_impact", "Authentication"],
+                    ["security_impact", "Security"],
+                    ["integration_impact", "External Integration"],
+                    ["infrastructure_impact", "Infrastructure"],
+                    ["deployment_impact", "Deployment"]
+                  ].map(([name, label]) => (
+                    <label key={name}>
+                      <input
+                        type="checkbox"
+                        name={name}
+                        checked={impact[name]}
+                        onChange={handleImpactChange}
+                      />
+                      {label}
+                    </label>
+                  ))}
                 </div>
 
                 <div className="form-group full-width">
@@ -881,8 +788,7 @@ function App() {
             <header className="page-header">
               <h1>Assessment History</h1>
               <p>
-                Review previous readiness and software change impact
-                assessments.
+                Review previous ticket-readiness and change-impact assessments.
               </p>
             </header>
 
@@ -890,10 +796,6 @@ function App() {
               <div className="assessment-ticket">
                 <span>{historyTicket.jira_reference}</span>
                 <strong>{historyTicket.title}</strong>
-                <small>
-                  Current readiness: {historyTicket.readiness_score}% -{" "}
-                  {historyTicket.readiness_status}
-                </small>
               </div>
 
               <h2>Readiness Assessments</h2>
@@ -920,7 +822,7 @@ function App() {
                       </div>
 
                       <p>
-                        Missing requirements:{" "}
+                        Missing:{" "}
                         {assessment.missing_requirements || "None"}
                       </p>
 
@@ -939,7 +841,7 @@ function App() {
               </h2>
 
               {impactHistory.length === 0 ? (
-                <p>No change impact assessments found.</p>
+                <p>No impact assessments found.</p>
               ) : (
                 <div className="history-list">
                   {impactHistory.map((assessment) => (
@@ -987,6 +889,16 @@ function App() {
         )}
       </main>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Authenticator hideSignUp={true}>
+      {({ signOut, user }) => (
+        <TicketApp signOut={signOut} user={user} />
+      )}
+    </Authenticator>
   );
 }
 
