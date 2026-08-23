@@ -1,0 +1,306 @@
+.summary-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      4,
+      minmax(0, 1fr)
+    );
+
+  gap: 18px;
+
+  margin-bottom: 28px;
+}
+
+.summary-card {
+  min-height: 116px;
+
+  border: 1px solid #e5eaf1;
+  border-radius: 14px;
+
+  background: white;
+
+  padding: 22px;
+
+  box-shadow:
+    0 5px 18px
+    rgba(15, 23, 42, 0.04);
+}
+
+.summary-card span {
+  display: block;
+
+  margin-bottom: 14px;
+
+  color: #64748b;
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.summary-card strong {
+  display: block;
+
+  color: #111827;
+
+  font-size: 32px;
+  line-height: 1;
+}
+
+.section-heading {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 18px;
+
+  margin-bottom: 18px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.section-heading button {
+  border: none;
+  border-radius: 8px;
+
+  background: #2563eb;
+  color: white;
+
+  padding: 9px 15px;
+
+  cursor: pointer;
+
+  font-weight: 600;
+}
+
+.section-heading button:hover {
+  background: #1d4ed8;
+}
+
+.ticket-count {
+  display: block;
+
+  margin-top: 4px;
+
+  color: #94a3b8;
+
+  font-size: 11px;
+}
+
+/* Ticket table */
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+
+  border-collapse: collapse;
+
+  min-width: 850px;
+}
+
+th {
+  padding: 12px 14px;
+
+  border-bottom:
+    1px solid #e5e7eb;
+
+  color: #64748b;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  text-align: left;
+
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  background: #f8fafc;
+}
+
+td {
+  padding: 15px 14px;
+
+  border-bottom:
+    1px solid #eef2f7;
+
+  color: #334155;
+
+  font-size: 13px;
+
+  vertical-align: middle;
+}
+
+tbody tr:hover {
+  background: #fafcff;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.jira-ref {
+  color: #2563eb;
+
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+/* Ticket type */
+
+.ticket-type-badge {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  color: #334155;
+
+  font-weight: 600;
+}
+
+/* Priority */
+
+.priority-badge {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-width: 72px;
+
+  padding: 5px 10px;
+
+  border-radius: 999px;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  border: 1px solid transparent;
+}
+
+.priority-low {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.priority-medium {
+  background: #fffbeb;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.priority-high {
+  background: #fff7ed;
+  color: #c2410c;
+  border-color: #fdba74;
+}
+
+.priority-critical {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+/* Readiness statuses */
+
+.status,
+.large-status {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px;
+
+  font-weight: 700;
+}
+
+.status {
+  padding: 5px 9px;
+
+  font-size: 11px;
+
+  white-space: nowrap;
+}
+
+.large-status {
+  padding: 8px 16px;
+
+  font-size: 13px;
+}
+
+.status.ready,
+.ready-result {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status.not-ready,
+.not-ready-result {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status.not-assessed {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+/* Table actions */
+
+.table-action-button,
+.history-button {
+  border-radius: 8px;
+
+  cursor: pointer;
+
+  font-weight: 700;
+}
+
+.table-action-button {
+  border: none;
+
+  background: #2563eb;
+  color: white;
+
+  padding: 7px 11px;
+
+  font-size: 11px;
+
+  white-space: nowrap;
+}
+
+.table-action-button:hover {
+  background: #1d4ed8;
+}
+
+.history-button {
+  border: 1px solid #d1d5db;
+
+  background: white;
+  color: #334155;
+
+  padding: 7px 11px;
+
+  font-size: 11px;
+}
+
+.history-button:hover {
+  background: #f8fafc;
+}
+
+.disabled-action {
+  color: #94a3b8;
+  font-size: 11px;
+}

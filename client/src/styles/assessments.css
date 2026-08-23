@@ -1,0 +1,200 @@
+.assessment-ticket {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 5px;
+
+  margin-bottom: 24px;
+
+  padding: 16px 18px;
+
+  border:
+    1px solid #dbeafe;
+
+  border-radius: 10px;
+
+  background: #eff6ff;
+}
+
+.assessment-ticket span {
+  color: #2563eb;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.assessment-ticket strong {
+  color: #1e293b;
+
+  font-size: 17px;
+}
+
+/* Checklist */
+
+.checklist {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap: 12px;
+
+  margin-top: 18px;
+}
+
+.checklist label {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  min-height: 48px;
+
+  border:
+    1px solid #e2e8f0;
+
+  border-radius: 9px;
+
+  background: #fafcff;
+
+  padding: 11px 12px;
+
+  color: #334155;
+
+  cursor: pointer;
+}
+
+.checklist label:hover {
+  border-color: #bfdbfe;
+
+  background: #f8fbff;
+}
+
+.checklist input {
+  width: 17px;
+  height: 17px;
+}
+
+/* Result cards */
+
+.result-card {
+  text-align: center;
+}
+
+.score {
+  margin: 28px 0 16px;
+
+  color: #111827;
+
+  font-size: 64px;
+  font-weight: 800;
+
+  letter-spacing: -0.04em;
+}
+
+.missing-list {
+  max-width: 480px;
+
+  margin: 28px auto 0;
+
+  border:
+    1px solid #e5e7eb;
+
+  border-radius: 10px;
+
+  background: #f8fafc;
+
+  padding: 18px 22px;
+
+  text-align: left;
+}
+
+.missing-list h3 {
+  margin: 0 0 10px;
+
+  color: #334155;
+
+  font-size: 15px;
+}
+
+.missing-list ul {
+  margin: 0;
+
+  padding-left: 20px;
+}
+
+.missing-list li {
+  margin: 5px 0;
+
+  color: #475569;
+}
+
+/* Impact */
+
+.impact-low {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.impact-medium {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.impact-high {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.impact-critical {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* History */
+
+.history-list {
+  display: grid;
+
+  gap: 12px;
+}
+
+.history-card {
+  border:
+    1px solid #e2e8f0;
+
+  border-radius: 10px;
+
+  background: #fafcff;
+
+  padding: 16px;
+}
+
+.history-card-top {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  flex-wrap: wrap;
+}
+
+.history-card p {
+  margin: 10px 0;
+
+  color: #475569;
+}
+
+.history-card small {
+  color: #94a3b8;
+}
+
+.history-heading {
+  margin-top: 34px !important;
+}
