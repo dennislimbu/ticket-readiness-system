@@ -13,10 +13,12 @@ const awsConfig = {
             "profile"
           ],
           redirectSignIn: [
-            "http://localhost:5173/"
+            "http://localhost:5173/",
+            "https://main.d2nkaiuafmrofj.amplifyapp.com/"
           ],
           redirectSignOut: [
-            "http://localhost:5173/"
+            "http://localhost:5173/",
+            "https://main.d2nkaiuafmrofj.amplifyapp.com/"
           ],
           responseType: "code"
         }
