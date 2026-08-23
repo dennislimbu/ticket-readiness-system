@@ -12,6 +12,7 @@ function Dashboard({
   onRefresh,
   onImpact,
   onHistory,
+  onOpenTicket,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -166,7 +167,15 @@ function Dashboard({
 
                     return (
                       <tr key={ticket.id}>
-                        <td className="jira-ref">{ticket.jira_reference}</td>
+                        <td>
+                          <button
+                            type="button"
+                            className="ticket-reference-button"
+                            onClick={() => onOpenTicket(ticket)}
+                          >
+                            {ticket.jira_reference}
+                          </button>
+                        </td>
 
                         <td>{ticket.title}</td>
 

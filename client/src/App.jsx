@@ -12,6 +12,7 @@ import NewAssessment from './components/NewAssessment';
 import ImpactAssessment from './components/ImpactAssessment';
 import HistoryView from './components/HistoryView';
 import AdminDashboard from './components/AdminDashboard';
+import TicketDetails from './components/ticket/TicketDetails';
 
 import './App.css';
 
@@ -32,6 +33,49 @@ function TicketApp({ signOut, user }) {
     groups: [],
   });
 
+  /*
+    Ticket Details state
+  */
+  const [detailsTicket, setDetailsTicket] = useState(null);
+
+  const [detailsLoading, setDetailsLoading] = useState(false);
+
+  const [editMode, setEditMode] = useState(false);
+
+  const [editSaving, setEditSaving] = useState(false);
+
+  const [editError, setEditError] = useState('');
+
+  const [editForm, setEditForm] = useState({
+    title: '',
+    ticket_type: 'Bug',
+    priority: 'Medium',
+    description: '',
+  });
+
+  /*
+    Comments state
+  */
+  const [comments, setComments] = useState([]);
+
+  const [commentsLoading, setCommentsLoading] = useState(false);
+
+  const [commentPosting, setCommentPosting] = useState(false);
+
+  const [commentError, setCommentError] = useState('');
+
+  /*
+    Audit history state
+  */
+  const [auditEntries, setAuditEntries] = useState([]);
+
+  const [auditLoading, setAuditLoading] = useState(false);
+
+  const [auditError, setAuditError] = useState('');
+
+  /*
+    New ticket form
+  */
   const [form, setForm] = useState({
     title: '',
     ticket_type: 'Bug',
@@ -41,6 +85,9 @@ function TicketApp({ signOut, user }) {
 
   const [createdTicket, setCreatedTicket] = useState(null);
 
+  /*
+    Readiness assessment
+  */
   const [readiness, setReadiness] = useState({
     has_description: false,
     has_steps_to_reproduce: false,
@@ -53,6 +100,9 @@ function TicketApp({ signOut, user }) {
 
   const [readinessResult, setReadinessResult] = useState(null);
 
+  /*
+    Impact assessment
+  */
   const [selectedTicket, setSelectedTicket] = useState(null);
 
   const [impact, setImpact] = useState({
@@ -69,22 +119,14 @@ function TicketApp({ signOut, user }) {
 
   const [impactResult, setImpactResult] = useState(null);
 
+  /*
+    Assessment history
+  */
   const [historyTicket, setHistoryTicket] = useState(null);
 
   const [readinessHistory, setReadinessHistory] = useState([]);
 
   const [impactHistory, setImpactHistory] = useState([]);
-
-  const openAdminDashboard = () => {
-    if (!isAdmin) {
-      setError('Administrator access is required.');
-
-      return;
-    }
-
-    setView('admin');
-    setError('');
-  };
 
   /*
     Retrieve tickets.
@@ -113,8 +155,7 @@ function TicketApp({ signOut, user }) {
   };
 
   /*
-    Retrieve the currently authenticated
-    Cognito user's role/group information.
+    Retrieve authenticated user role/group.
   */
   const fetchCurrentUser = async () => {
     try {
@@ -149,19 +190,27 @@ function TicketApp({ signOut, user }) {
 
   const isAdmin = currentUser.groups.includes('Admin');
 
-  /*
-    Developers and Admins may create tickets.
-  */
   const canCreateTickets = isDeveloper || isAdmin;
 
-  /*
-    Developer, Reviewer and Admin may
-    perform assessments.
-  */
+  const canEditTickets = isDeveloper || isAdmin;
+
   const canAssessTickets = isDeveloper || isReviewer || isAdmin;
 
   /*
-    Form input handler.
+    Administration navigation
+  */
+  const openAdminDashboard = () => {
+    if (!isAdmin) {
+      setError('Administrator access is required.');
+      return;
+    }
+
+    setView('admin');
+    setError('');
+  };
+
+  /*
+    New ticket form input
   */
   const handleFormChange = (event) => {
     const { name, value } = event.target;
@@ -173,14 +222,13 @@ function TicketApp({ signOut, user }) {
   };
 
   /*
-    Create new ticket.
+    Create ticket
   */
   const handleCreateTicket = async (event) => {
     event.preventDefault();
 
     if (!canCreateTickets) {
       setError('You do not have permission to create tickets.');
-
       return;
     }
 
@@ -207,30 +255,23 @@ function TicketApp({ signOut, user }) {
 
       setReadiness({
         has_description: Boolean(form.description),
-
         has_steps_to_reproduce: false,
-
         has_expected_behaviour: false,
-
         has_actual_behaviour: false,
-
         has_environment: false,
-
         has_acceptance_criteria: false,
-
         has_priority: Boolean(form.priority),
       });
 
       await fetchTickets();
     } catch (err) {
       console.error(err);
-
       setError(err.message);
     }
   };
 
   /*
-    Readiness checkbox handler.
+    Readiness checkbox handler
   */
   const handleReadinessChange = (event) => {
     const { name, checked } = event.target;
@@ -242,7 +283,7 @@ function TicketApp({ signOut, user }) {
   };
 
   /*
-    Run readiness assessment.
+    Run readiness assessment
   */
   const runReadinessAssessment = async () => {
     if (!createdTicket || !canAssessTickets) {
@@ -276,26 +317,24 @@ function TicketApp({ signOut, user }) {
       await fetchTickets();
     } catch (err) {
       console.error(err);
-
       setError(err.message);
     }
   };
 
   /*
-    Impact field handler.
+    Impact form input
   */
   const handleImpactChange = (event) => {
     const { name, type, checked, value } = event.target;
 
     setImpact((previous) => ({
       ...previous,
-
       [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
   /*
-    Run impact assessment.
+    Run impact assessment
   */
   const runImpactAssessment = async () => {
     if (!selectedTicket || !canAssessTickets) {
@@ -327,24 +366,258 @@ function TicketApp({ signOut, user }) {
       setImpactResult(data.result);
     } catch (err) {
       console.error(err);
-
       setError(err.message);
     }
   };
 
   /*
-    Dashboard navigation.
+    Dashboard navigation
   */
   const openDashboard = () => {
     setView('dashboard');
-
     setError('');
 
     fetchTickets();
   };
 
   /*
-    New assessment navigation.
+    Retrieve ticket comments
+  */
+  const fetchTicketComments = async (ticketId) => {
+    try {
+      setCommentsLoading(true);
+      setCommentError('');
+
+      const response = await authenticatedFetch(
+        `${API_BASE_URL}/api/tickets/${ticketId}/comments`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Unable to retrieve comments');
+      }
+
+      setComments(data);
+    } catch (err) {
+      console.error('Comments error:', err);
+
+      setCommentError('Unable to retrieve comments.');
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  /*
+    Retrieve ticket audit history
+  */
+  const fetchTicketAudit = async (ticketId) => {
+    try {
+      setAuditLoading(true);
+      setAuditError('');
+
+      const response = await authenticatedFetch(
+        `${API_BASE_URL}/api/tickets/${ticketId}/audit`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Unable to retrieve ticket activity');
+      }
+
+      setAuditEntries(data);
+    } catch (err) {
+      console.error('Audit history error:', err);
+
+      setAuditError('Unable to retrieve ticket activity.');
+    } finally {
+      setAuditLoading(false);
+    }
+  };
+
+  /*
+    Open Ticket Details screen
+  */
+  const openTicketDetails = async (ticket) => {
+    try {
+      setDetailsLoading(true);
+      setError('');
+
+      const response = await authenticatedFetch(
+        `${API_BASE_URL}/api/tickets/${ticket.id}`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Unable to retrieve ticket details');
+      }
+
+      setDetailsTicket(data);
+
+      await Promise.all([
+        fetchTicketComments(data.id),
+        fetchTicketAudit(data.id),
+      ]);
+
+      setEditMode(false);
+      setEditError('');
+
+      setView('ticket-details');
+    } catch (err) {
+      console.error('Ticket details error:', err);
+
+      setError('Unable to retrieve ticket details.');
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  /*
+    Add ticket comment
+  */
+  const addTicketComment = async (comment) => {
+    if (!detailsTicket) {
+      return false;
+    }
+
+    try {
+      setCommentPosting(true);
+      setCommentError('');
+
+      const response = await authenticatedFetch(
+        `${API_BASE_URL}/api/tickets/${detailsTicket.id}/comments`,
+        {
+          method: 'POST',
+
+          headers: {
+            'Content-Type': 'application/json',
+          },
+
+          body: JSON.stringify({
+            comment,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Unable to add comment');
+      }
+
+      await Promise.all([
+        fetchTicketComments(detailsTicket.id),
+
+        fetchTicketAudit(detailsTicket.id),
+      ]);
+
+      return true;
+    } catch (err) {
+      console.error('Comment posting error:', err);
+
+      setCommentError(err.message || 'Unable to add comment.');
+
+      return false;
+    } finally {
+      setCommentPosting(false);
+    }
+  };
+
+  /*
+    Open ticket edit mode
+  */
+  const openTicketEdit = () => {
+    if (!detailsTicket || !canEditTickets) {
+      return;
+    }
+
+    setEditForm({
+      title: detailsTicket.title || '',
+
+      ticket_type: detailsTicket.ticket_type || 'Bug',
+
+      priority: detailsTicket.priority || 'Medium',
+
+      description: detailsTicket.description || '',
+    });
+
+    setEditError('');
+    setEditMode(true);
+  };
+
+  /*
+    Edit form input
+  */
+  const handleEditChange = (event) => {
+    const { name, value } = event.target;
+
+    setEditForm((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+  };
+
+  /*
+    Cancel ticket edit
+  */
+  const cancelTicketEdit = () => {
+    setEditMode(false);
+    setEditError('');
+  };
+
+  /*
+    Save ticket edit
+  */
+  const saveTicketEdit = async (event) => {
+    event.preventDefault();
+
+    if (!detailsTicket || !canEditTickets) {
+      return;
+    }
+
+    try {
+      setEditSaving(true);
+      setEditError('');
+
+      const response = await authenticatedFetch(
+        `${API_BASE_URL}/api/tickets/${detailsTicket.id}`,
+        {
+          method: 'PUT',
+
+          headers: {
+            'Content-Type': 'application/json',
+          },
+
+          body: JSON.stringify(editForm),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Unable to update ticket');
+      }
+
+      setDetailsTicket(data.ticket);
+
+      await fetchTicketAudit(data.ticket.id);
+
+      setEditMode(false);
+
+      await fetchTickets();
+    } catch (err) {
+      console.error('Ticket update error:', err);
+
+      setEditError(err.message || 'Unable to update ticket.');
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  /*
+    New assessment navigation
   */
   const openNewAssessment = () => {
     if (!canCreateTickets) {
@@ -378,7 +651,7 @@ function TicketApp({ signOut, user }) {
   };
 
   /*
-    Reset impact form.
+    Reset impact form
   */
   const resetImpact = () => {
     setImpactResult(null);
@@ -397,7 +670,7 @@ function TicketApp({ signOut, user }) {
   };
 
   /*
-    Open impact assessment from dashboard.
+    Open impact assessment
   */
   const openImpactAssessment = (ticket) => {
     if (!canAssessTickets) {
@@ -416,8 +689,7 @@ function TicketApp({ signOut, user }) {
   };
 
   /*
-    Continue directly from readiness
-    into impact assessment.
+    Continue from readiness into impact
   */
   const continueToImpact = () => {
     if (!createdTicket || !readinessResult || !canAssessTickets) {
@@ -438,7 +710,7 @@ function TicketApp({ signOut, user }) {
   };
 
   /*
-    Open ticket assessment history.
+    Open assessment history
   */
   const openHistory = async (ticket) => {
     try {
@@ -472,6 +744,17 @@ function TicketApp({ signOut, user }) {
     }
   };
 
+  /*
+    Open Assessment History from Ticket Details
+  */
+  const openDetailsAssessmentHistory = () => {
+    if (!detailsTicket) {
+      return;
+    }
+
+    openHistory(detailsTicket);
+  };
+
   return (
     <div className="app">
       <Sidebar
@@ -496,7 +779,37 @@ function TicketApp({ signOut, user }) {
             onRefresh={fetchTickets}
             onImpact={openImpactAssessment}
             onHistory={openHistory}
+            onOpenTicket={openTicketDetails}
           />
+        )}
+
+        {view === 'ticket-details' && detailsTicket && (
+          <TicketDetails
+            ticket={detailsTicket}
+            canEditTicket={canEditTickets}
+            editMode={editMode}
+            editForm={editForm}
+            editSaving={editSaving}
+            editError={editError}
+            comments={comments}
+            commentsLoading={commentsLoading}
+            commentPosting={commentPosting}
+            commentError={commentError}
+            auditEntries={auditEntries}
+            auditLoading={auditLoading}
+            auditError={auditError}
+            onBack={openDashboard}
+            onEdit={openTicketEdit}
+            onEditChange={handleEditChange}
+            onSaveEdit={saveTicketEdit}
+            onCancelEdit={cancelTicketEdit}
+            onAddComment={addTicketComment}
+            onAssessmentHistory={openDetailsAssessmentHistory}
+          />
+        )}
+
+        {view === 'ticket-details' && detailsLoading && (
+          <p>Loading ticket details...</p>
         )}
 
         {view === 'admin' && isAdmin && (
