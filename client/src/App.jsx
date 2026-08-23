@@ -23,6 +23,14 @@ function TicketApp({ signOut, user }) {
 
   const [error, setError] = useState('');
 
+  /*
+    Current authenticated user's Cognito groups.
+  */
+  const [currentUser, setCurrentUser] = useState({
+    username: '',
+    groups: [],
+  });
+
   const [form, setForm] = useState({
     title: '',
     ticket_type: 'Bug',
@@ -66,6 +74,9 @@ function TicketApp({ signOut, user }) {
 
   const [impactHistory, setImpactHistory] = useState([]);
 
+  /*
+    Retrieve tickets.
+  */
   const fetchTickets = async () => {
     try {
       setLoading(true);
@@ -89,10 +100,57 @@ function TicketApp({ signOut, user }) {
     }
   };
 
+  /*
+    Retrieve the currently authenticated
+    Cognito user's role/group information.
+  */
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/me`);
+
+      if (!response.ok) {
+        throw new Error('Unable to retrieve user role');
+      }
+
+      const data = await response.json();
+
+      setCurrentUser({
+        username: data.username || '',
+        groups: data.groups || [],
+      });
+    } catch (err) {
+      console.error('User role error:', err);
+    }
+  };
+
   useEffect(() => {
     fetchTickets();
+    fetchCurrentUser();
   }, []);
 
+  /*
+    Role helpers
+  */
+  const isDeveloper = currentUser.groups.includes('Developer');
+
+  const isReviewer = currentUser.groups.includes('Reviewer');
+
+  const isAdmin = currentUser.groups.includes('Admin');
+
+  /*
+    Developers and Admins may create tickets.
+  */
+  const canCreateTickets = isDeveloper || isAdmin;
+
+  /*
+    Developer, Reviewer and Admin may
+    perform assessments.
+  */
+  const canAssessTickets = isDeveloper || isReviewer || isAdmin;
+
+  /*
+    Form input handler.
+  */
   const handleFormChange = (event) => {
     const { name, value } = event.target;
 
@@ -102,8 +160,17 @@ function TicketApp({ signOut, user }) {
     }));
   };
 
+  /*
+    Create new ticket.
+  */
   const handleCreateTicket = async (event) => {
     event.preventDefault();
+
+    if (!canCreateTickets) {
+      setError('You do not have permission to create tickets.');
+
+      return;
+    }
 
     try {
       setError('');
@@ -150,6 +217,9 @@ function TicketApp({ signOut, user }) {
     }
   };
 
+  /*
+    Readiness checkbox handler.
+  */
   const handleReadinessChange = (event) => {
     const { name, checked } = event.target;
 
@@ -159,8 +229,11 @@ function TicketApp({ signOut, user }) {
     }));
   };
 
+  /*
+    Run readiness assessment.
+  */
   const runReadinessAssessment = async () => {
-    if (!createdTicket) {
+    if (!createdTicket || !canAssessTickets) {
       return;
     }
 
@@ -196,6 +269,9 @@ function TicketApp({ signOut, user }) {
     }
   };
 
+  /*
+    Impact field handler.
+  */
   const handleImpactChange = (event) => {
     const { name, type, checked, value } = event.target;
 
@@ -206,8 +282,11 @@ function TicketApp({ signOut, user }) {
     }));
   };
 
+  /*
+    Run impact assessment.
+  */
   const runImpactAssessment = async () => {
-    if (!selectedTicket) {
+    if (!selectedTicket || !canAssessTickets) {
       return;
     }
 
@@ -241,13 +320,27 @@ function TicketApp({ signOut, user }) {
     }
   };
 
+  /*
+    Dashboard navigation.
+  */
   const openDashboard = () => {
     setView('dashboard');
+
     setError('');
+
     fetchTickets();
   };
 
+  /*
+    New assessment navigation.
+  */
   const openNewAssessment = () => {
+    if (!canCreateTickets) {
+      setError('You do not have permission to create tickets.');
+
+      return;
+    }
+
     setView('assessment');
 
     setForm({
@@ -272,6 +365,9 @@ function TicketApp({ signOut, user }) {
     });
   };
 
+  /*
+    Reset impact form.
+  */
   const resetImpact = () => {
     setImpactResult(null);
 
@@ -288,17 +384,31 @@ function TicketApp({ signOut, user }) {
     });
   };
 
+  /*
+    Open impact assessment from dashboard.
+  */
   const openImpactAssessment = (ticket) => {
+    if (!canAssessTickets) {
+      setError('You do not have permission to assess tickets.');
+
+      return;
+    }
+
     setSelectedTicket(ticket);
 
     resetImpact();
 
     setError('');
+
     setView('impact');
   };
 
+  /*
+    Continue directly from readiness
+    into impact assessment.
+  */
   const continueToImpact = () => {
-    if (!createdTicket || !readinessResult) {
+    if (!createdTicket || !readinessResult || !canAssessTickets) {
       return;
     }
 
@@ -315,6 +425,9 @@ function TicketApp({ signOut, user }) {
     setView('impact');
   };
 
+  /*
+    Open ticket assessment history.
+  */
   const openHistory = async (ticket) => {
     try {
       setError('');
@@ -353,6 +466,9 @@ function TicketApp({ signOut, user }) {
         user={user}
         signOut={signOut}
         view={view}
+        groups={currentUser.groups}
+        canCreateTickets={canCreateTickets}
+        isAdmin={isAdmin}
         onDashboard={openDashboard}
         onNewAssessment={openNewAssessment}
       />
@@ -363,13 +479,14 @@ function TicketApp({ signOut, user }) {
             tickets={tickets}
             loading={loading}
             error={error}
+            canAssessTickets={canAssessTickets}
             onRefresh={fetchTickets}
             onImpact={openImpactAssessment}
             onHistory={openHistory}
           />
         )}
 
-        {view === 'assessment' && (
+        {view === 'assessment' && canCreateTickets && (
           <NewAssessment
             form={form}
             createdTicket={createdTicket}
@@ -385,7 +502,7 @@ function TicketApp({ signOut, user }) {
           />
         )}
 
-        {view === 'impact' && (
+        {view === 'impact' && canAssessTickets && (
           <ImpactAssessment
             selectedTicket={selectedTicket}
             impact={impact}

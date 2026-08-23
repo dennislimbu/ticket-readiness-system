@@ -8,13 +8,17 @@ function Dashboard({
   tickets,
   loading,
   error,
+  canAssessTickets,
   onRefresh,
   onImpact,
   onHistory,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
+
   const [typeFilter, setTypeFilter] = useState('All');
+
   const [priorityFilter, setPriorityFilter] = useState('All');
+
   const [readinessFilter, setReadinessFilter] = useState('All');
 
   const totalTickets = tickets.length;
@@ -31,6 +35,9 @@ function Dashboard({
     (ticket) => ticket.readiness_status === 'NOT ASSESSED'
   ).length;
 
+  /*
+    Search and filter tickets.
+  */
   const filteredTickets = tickets.filter((ticket) => {
     const search = searchTerm.trim().toLowerCase();
 
@@ -69,21 +76,25 @@ function Dashboard({
       <section className="summary-grid">
         <div className="summary-card">
           <span>Total Tickets</span>
+
           <strong>{totalTickets}</strong>
         </div>
 
         <div className="summary-card">
           <span>Ready</span>
+
           <strong>{readyTickets}</strong>
         </div>
 
         <div className="summary-card">
           <span>Not Ready</span>
+
           <strong>{notReadyTickets}</strong>
         </div>
 
         <div className="summary-card">
           <span>Pending</span>
+
           <strong>{pendingTickets}</strong>
         </div>
       </section>
@@ -123,12 +134,19 @@ function Dashboard({
               <thead>
                 <tr>
                   <th>Ticket Ref</th>
+
                   <th>Title</th>
+
                   <th>Type</th>
+
                   <th>Priority</th>
+
                   <th>Readiness</th>
+
                   <th>Score</th>
+
                   <th>Impact</th>
+
                   <th>History</th>
                 </tr>
               </thead>
@@ -143,6 +161,8 @@ function Dashboard({
                     const { Icon, label } = getTicketTypeMeta(
                       ticket.ticket_type
                     );
+
+                    const ticketReady = ticket.readiness_status === 'READY';
 
                     return (
                       <tr key={ticket.id}>
@@ -177,7 +197,7 @@ function Dashboard({
                         <td>{ticket.readiness_score}%</td>
 
                         <td>
-                          {ticket.readiness_status === 'READY' ? (
+                          {ticketReady && canAssessTickets ? (
                             <button
                               className="table-action-button"
                               onClick={() => onImpact(ticket)}
@@ -185,7 +205,9 @@ function Dashboard({
                               Assess Impact
                             </button>
                           ) : (
-                            <span className="disabled-action">Not Ready</span>
+                            <span className="disabled-action">
+                              {ticketReady ? 'No Permission' : 'Not Ready'}
+                            </span>
                           )}
                         </td>
 
