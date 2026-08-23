@@ -1,4 +1,10 @@
-import { LayoutDashboard, PlusCircle, ShieldCheck, LogOut } from 'lucide-react';
+import {
+  LayoutDashboard,
+  PlusCircle,
+  ShieldCheck,
+  LogOut,
+  Settings,
+} from 'lucide-react';
 
 function Sidebar({
   user,
@@ -9,11 +15,8 @@ function Sidebar({
   isAdmin,
   onDashboard,
   onNewAssessment,
+  onAdminDashboard,
 }) {
-  /*
-    Each demo account currently belongs to one
-    primary Cognito group.
-  */
   const role = groups?.length > 0 ? groups[0] : 'Authenticated User';
 
   return (
@@ -64,7 +67,15 @@ function Sidebar({
           </button>
         )}
 
-        {isAdmin && <div className="admin-indicator">Admin access enabled</div>}
+        {isAdmin && (
+          <button
+            className={`nav-item ${view === 'admin' ? 'active' : ''}`}
+            onClick={onAdminDashboard}
+          >
+            <Settings size={17} />
+            Administration
+          </button>
+        )}
       </nav>
     </aside>
   );

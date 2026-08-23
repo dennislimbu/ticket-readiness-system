@@ -11,6 +11,7 @@ import Dashboard from './components/Dashboard';
 import NewAssessment from './components/NewAssessment';
 import ImpactAssessment from './components/ImpactAssessment';
 import HistoryView from './components/HistoryView';
+import AdminDashboard from './components/AdminDashboard';
 
 import './App.css';
 
@@ -73,6 +74,17 @@ function TicketApp({ signOut, user }) {
   const [readinessHistory, setReadinessHistory] = useState([]);
 
   const [impactHistory, setImpactHistory] = useState([]);
+
+  const openAdminDashboard = () => {
+    if (!isAdmin) {
+      setError('Administrator access is required.');
+
+      return;
+    }
+
+    setView('admin');
+    setError('');
+  };
 
   /*
     Retrieve tickets.
@@ -471,6 +483,7 @@ function TicketApp({ signOut, user }) {
         isAdmin={isAdmin}
         onDashboard={openDashboard}
         onNewAssessment={openNewAssessment}
+        onAdminDashboard={openAdminDashboard}
       />
 
       <main className="main-content">
@@ -484,6 +497,10 @@ function TicketApp({ signOut, user }) {
             onImpact={openImpactAssessment}
             onHistory={openHistory}
           />
+        )}
+
+        {view === 'admin' && isAdmin && (
+          <AdminDashboard tickets={tickets} onRefresh={fetchTickets} />
         )}
 
         {view === 'assessment' && canCreateTickets && (
