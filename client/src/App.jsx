@@ -11,7 +11,6 @@ function TicketApp({ signOut, user }) {
   const [error, setError] = useState("");
 
   const [form, setForm] = useState({
-    jira_reference: "",
     title: "",
     ticket_type: "Bug",
     priority: "Medium",
@@ -231,7 +230,6 @@ function TicketApp({ signOut, user }) {
     setView("assessment");
 
     setForm({
-      jira_reference: "",
       title: "",
       ticket_type: "Bug",
       priority: "Medium",
@@ -495,21 +493,16 @@ function TicketApp({ signOut, user }) {
         <form onSubmit={handleCreateTicket}>
           <div className="form-grid">
             <div className="form-group">
-              <label>Jira Reference</label>
+  <label>Ticket Reference</label>
 
-              <input
-                name="jira_reference"
-                value={form.jira_reference}
-                onChange={handleFormChange}
-                placeholder="e.g. DEV-2045"
-                required
-              />
+  <div className="generated-reference-box">
+    Automatically generated when the ticket is created
+  </div>
 
-              <small className="field-help">
-                Enter the Jira ticket or work-item reference.
-              </small>
-            </div>
-
+  <small className="field-help">
+    The system will assign a unique reference such as TRCI-0001.
+  </small>
+</div>
             <div className="form-group">
               <label>Ticket Type</label>
 

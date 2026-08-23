@@ -875,3 +875,16 @@ tbody tr:last-child td {
 [data-amplify-authenticator] .amplify-button--link:hover {
   color: #1d4ed8;
 }
+
+.generated-reference-box {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 11px 12px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 9px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 13px;
+}
