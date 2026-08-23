@@ -50,3 +50,46 @@ CREATE TABLE IF NOT EXISTS impact_assessments (
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS ticket_comments (
+    id SERIAL PRIMARY KEY,
+
+    ticket_id INTEGER NOT NULL
+        REFERENCES tickets(id)
+        ON DELETE CASCADE,
+
+    username VARCHAR(255) NOT NULL,
+
+    user_role VARCHAR(50),
+
+    comment TEXT NOT NULL,
+
+    created_at TIMESTAMP
+        DEFAULT CURRENT_TIMESTAMP,
+
+    updated_at TIMESTAMP
+        DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS ticket_audit_log (
+    id SERIAL PRIMARY KEY,
+
+    ticket_id INTEGER NOT NULL
+        REFERENCES tickets(id)
+        ON DELETE CASCADE,
+
+    username VARCHAR(255) NOT NULL,
+
+    user_role VARCHAR(50),
+
+    action VARCHAR(50) NOT NULL,
+
+    field_name VARCHAR(100),
+
+    old_value TEXT,
+
+    new_value TEXT,
+
+    created_at TIMESTAMP
+        DEFAULT CURRENT_TIMESTAMP
+);
